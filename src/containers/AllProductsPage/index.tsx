@@ -1,80 +1,14 @@
-// import { useEffect, useState } from 'react';
-// import {
-//   connect,
-//   MapDispatchToPropsFunction,
-//   MapStateToProps,
-// } from 'react-redux';
-// import { ProductCard } from '../../components/ProductCard';
-// import ProductDetailsAction from '../../store/actions/productDetailsAction';
-// import { ShopProducts } from '../../store/reducers/productDetailsReducer';
-// import { StoreStateType } from '../../store/rootReducer';
-// import {
-//   AllProductsDispatchToProps,
-//   AllProductsOwnProps,
-//   AllProductsPageProps,
-//   AllProductsStateProps,
-// } from './interface';
-// import './style.css';
-
-// function AllProductsPage(props: AllProductsPageProps) {
-//   const [shopProducts, setShopProducts] = useState<ShopProducts>(
-//     props.shopProducts
-//   );
-
-//   useEffect(() => {
-//     // const { shopProducts } = props;
-
-//     if (!shopProducts.products.length) {
-//       props.fetchShopProducts({});
-//     }
-//   }, []);
-
-//   const renderAllProducts = () => {
-//     setShopProducts(props.shopProducts);
-//     return shopProducts.products.map(({ title, variants, id }) => {
-//       return (
-//         <div key={id} className='product-item-container'>
-//           <ProductCard name={title} url={variants[0].image} />
-//         </div>
-//       );
-//     });
-//   };
-
-//   return (
-//     <div className='all-products-page-container'>{renderAllProducts()}</div>
-//   );
-// }
-
-// const mapStateToProps: MapStateToProps<
-//   AllProductsStateProps,
-//   AllProductsOwnProps,
-//   StoreStateType
-// > = (state) => {
-//   return {
-//     shopProducts: state.productDetails.shopProducts,
-//   };
-// };
-
-// const mapDispatchToProps: MapDispatchToPropsFunction<
-//   AllProductsDispatchToProps,
-//   AllProductsOwnProps
-// > = (dispatch) => {
-//   const { fetchShopProducts } = new ProductDetailsAction();
-//   return {
-//     fetchShopProducts: (options) => dispatch(fetchShopProducts(options)),
-//   };
-// };
-
-// export default connect(mapStateToProps, mapDispatchToProps)(AllProductsPage);
-
 import React from 'react';
 import {
   connect,
   MapDispatchToPropsFunction,
   MapStateToProps,
 } from 'react-redux';
+import { AllProductsSideBar } from '../../components/AllProductsSideBar';
+import Pagination from '../../components/Pagination';
 import { ProductCard } from '../../components/ProductCard';
-import ProductDetailsAction from '../../store/actions/productDetailsAction';
+import ShopAction from '../../store/actions/shopAction';
+import UserAction from '../../store/actions/userAction';
 import { StoreStateType } from '../../store/rootReducer';
 import {
   AllProductsDispatchToProps,
@@ -89,7 +23,7 @@ class AllProductsPage extends React.Component<AllProductsPageProps> {
     const { shopProducts } = this.props;
 
     if (!shopProducts.products.length) {
-      this.props.fetchShopProducts({});
+      this.props.fetchShopProductsAndFilters();
     }
   }
 
@@ -104,10 +38,36 @@ class AllProductsPage extends React.Component<AllProductsPageProps> {
     });
   };
 
+  handlePageChange = (selectedPage: number) => {
+    const { userSelectedPage, updateUserShopProductsPage } = this.props;
+
+    if (userSelectedPage !== selectedPage)
+      updateUserShopProductsPage(selectedPage);
+  };
+
   render() {
+    const {
+      productFilters,
+      userFilters,
+      updateUserFilters,
+      shopProducts,
+      userSelectedPage,
+    } = this.props;
     return (
       <div className='all-products-page-container'>
-        {this.renderAllProducts()}
+        <AllProductsSideBar
+          onUpdateUserFilters={updateUserFilters}
+          userFilters={userFilters}
+          productFilters={productFilters}
+        />
+        <div className='all-products-container'>
+          <div className='all-products'>{this.renderAllProducts()}</div>
+          <Pagination
+            overrideSelectedPage={userSelectedPage}
+            onChange={this.handlePageChange}
+            numberOfPages={shopProducts.totalPages}
+          />
+        </div>
       </div>
     );
   }
@@ -118,8 +78,13 @@ const mapStateToProps: MapStateToProps<
   AllProductsOwnProps,
   StoreStateType
 > = (state) => {
+  const { shopProducts, productFilters } = state.shop;
+  const { filters, shopProductsPage } = state.user;
   return {
-    shopProducts: state.productDetails.shopProducts,
+    shopProducts: shopProducts,
+    productFilters: productFilters,
+    userFilters: filters,
+    userSelectedPage: shopProductsPage,
   };
 };
 
@@ -127,9 +92,14 @@ const mapDispatchToProps: MapDispatchToPropsFunction<
   AllProductsDispatchToProps,
   AllProductsOwnProps
 > = (dispatch) => {
-  const { fetchShopProducts } = new ProductDetailsAction();
+  const { fetchShopProducts, fetchShopProductsAndFilters } = new ShopAction();
+  const { updateUserFilters, updateUserShopProductsPage } = new UserAction();
   return {
     fetchShopProducts: (options) => dispatch(fetchShopProducts(options)),
+    fetchShopProductsAndFilters: () => dispatch(fetchShopProductsAndFilters()),
+    updateUserFilters: (filters) => dispatch(updateUserFilters(filters)),
+    updateUserShopProductsPage: (shopProductsPage) =>
+      dispatch(updateUserShopProductsPage(shopProductsPage)),
   };
 };
 
