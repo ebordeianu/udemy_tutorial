@@ -6,6 +6,7 @@ import {
 } from 'react-redux';
 import { ProductCard } from '../../components/ProductCard';
 import ShopAction from '../../store/actions/shopAction';
+import UserAction from '../../store/actions/userAction';
 import { StoreStateType } from '../../store/rootReducer';
 import {
   BestSellerDispatchProps,
@@ -23,10 +24,12 @@ class BestSeller extends React.Component<BestSellerProps> {
   }
 
   renderBestSellerProducts = () => {
-    const { bestSellerProducts } = this.props;
+    const { bestSellerProducts, addToCart } = this.props;
 
-    return bestSellerProducts.map(({ title, id, variants }) => {
-      return <ProductCard key={id} url={variants[0].image} name={title} />;
+    return bestSellerProducts.map((product) => {
+      return (
+        <ProductCard key={product.id} product={product} addToCart={addToCart} />
+      );
     });
   };
 
@@ -57,9 +60,11 @@ const mapDispatchToProps: MapDispatchToPropsFunction<
   {}
 > = (dispatch) => {
   const { fetchAllBestSellerProducts } = new ShopAction();
+  const { addToCart } = new UserAction();
 
   return {
     fetchAllBestSellerProducts: () => dispatch(fetchAllBestSellerProducts()),
+    addToCart: (productPurchase) => dispatch(addToCart(productPurchase)),
   };
 };
 

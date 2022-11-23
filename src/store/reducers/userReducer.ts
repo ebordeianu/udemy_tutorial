@@ -1,12 +1,17 @@
 import { Reducer } from 'redux';
 import UserAction, { UserReducerAction } from '../actions/userAction';
-import { ProductFilters } from './shopReducer';
+import { ProductFilters, ProductVariantCompleteDetails } from './shopReducer';
 import update from 'immutability-helper';
+
+export interface ProductPurchase extends ProductVariantCompleteDetails {
+  quantity: number;
+}
 
 export interface User {
   filters: ProductFilters;
   shopProductsPage: number;
   shopProductsSize: number;
+  cart: ProductPurchase[];
 }
 
 const userInitialState: User = {
@@ -17,6 +22,7 @@ const userInitialState: User = {
   },
   shopProductsPage: 1,
   shopProductsSize: 2,
+  cart: [],
 };
 
 export const userReducer: Reducer<User, UserReducerAction> = (
@@ -30,6 +36,8 @@ export const userReducer: Reducer<User, UserReducerAction> = (
       return update(state, {
         shopProductsPage: { $set: action.shopProductsPage },
       });
+    case UserAction.ADD_TO_CART:
+      return update(state, { cart: { $push: [action.productPurchase] } });
     default:
       return state;
   }
